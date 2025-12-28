@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>الصفحة الرئيسية</title>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Tahoma, sans-serif;
+  color: #fff;
+}
+
+body {
+  background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027);
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease infinite;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#topBar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 50px;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 100;
+}
+
+#earnedAmount {
+  color: gold;
+  font-weight: bold;
+}
+
+#logoutBtn {
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #00e6ff;
+  color: #000;
+  font-weight: bold;
+}
+
+#videosContainer {
+  margin-top: 50px;
+  height: calc(100vh - 50px);
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+}
+
+.video-container {
+  height: calc(100vh - 50px);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#addVideoForm {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  padding: 15px;
+  border-radius: 10px;
+  z-index: 200;
+}
+
+#addVideoForm input,
+#addVideoForm select,
+#addVideoForm button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="topBar">
+  <button id="logoutBtn">تسجيل الخروج</button>
+  <div id="earnedAmount">$ 0</div>
+</div>
+
+<div id="addVideoForm">
+  <input type="text" id="videoLink" placeholder="رابط فيديو">
+  <select id="videoRegion">
+    <option value="">اختر المنطقة</option>
+    <option value="الشرقية">الشرقية</option>
+    <option value="الوسطى">الوسطى</option>
+    <option value="الغربية">الغربية</option>
+    <option value="الكل">الكل</option>
+  </select>
+  <button id="addVideoBtn">إضافة الفيديو</button>
+</div>
+
+<div id="videosContainer"></div>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDUW9M48CLaSNKbs-zrpuVl2Tu9EOqLUlA",
+  authDomain: "new-z-o.firebaseapp.com",
+  projectId: "new-z-o",
+  storageBucket: "new-z-o.firebasestorage.app",
+  messagingSenderId: "692467470055",
+  appId: "1:692467470055:web:3b4f4130b09f2044de9c42"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUserData = null;
+let watchedVideos = new Set();
+let players = {};
+
+const videosContainer = document.getElementById("videosContainer");
+const earnedAmountDiv = document.getElementById("earnedAmount");
+const addVideoForm = document.getElementById("addVideoForm");
+const logoutBtn = document.getElementById("logoutBtn");
+const addVideoBtn = document.getElementById("addVideoBtn");
+const videoLinkInput = document.getElementById("videoLink");
+const videoRegionSelect = document.getElementById("videoRegion");
+
+function updateEarnedAmount() {
+  earnedAmountDiv.textContent = `$ ${watchedVideos.size / 2}`;
+}
+
+// التحقق من تسجيل الدخول
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return location.href = "login.html";
+
+  const userSnap = await getDoc(doc(db, "users", user.uid));
+  currentUserData = userSnap.data();
+
+  watchedVideos = new Set(currentUserData?.watchedVideos || []);
+  updateEarnedAmount();
+
+  if (currentUserData?.role === "admin") {
+    addVideoForm.style.display = "block";
+  }
+
+  loadVideos();
+});
+
+// تسجيل الخروج
+logoutBtn.addEventListener("click", () => {
+  signOut(auth).then(() => location.href = "login.html");
+});
+
+// تحميل الفيديوهات
+async function loadVideos() {
+  videosContainer.innerHTML = "";
+  players = {};
+
+  const snap = await getDocs(collection(db, "videos"));
+
+  snap.forEach(docSnap => {
+    const data = docSnap.data();
+    const id = docSnap.id;
+
+    if (data.region !== "الكل" && data.region !== currentUserData.region) return;
+
+    const container = document.createElement("div");
+    container.className = "video-container";
+    container.dataset.videoId = id;
+
+    const playerDiv = document.createElement("div");
+    playerDiv.id = "player_" + id;
+
+    container.appendChild(playerDiv);
+    videosContainer.appendChild(container);
+
+    players[id] = new YT.Player(playerDiv.id, {
+      videoId: extractVideoId(data.link),
+      height: "100%",
+      width: "100%",
+      playerVars: { controls: 0, rel: 0 }
+    });
+
+    // عند انتهاء تشغيل الفيديو: تسجيل المشاهدة
+    players[id].addEventListener("onStateChange", (event) => {
+      if (event.data === YT.PlayerState.ENDED) markVideoWatched(id);
+    });
+  });
+
+  setTimeout(observeVideos, 1000);
+}
+
+// استخراج ID من رابط يوتيوب
+function extractVideoId(url) {
+  const r = /(?:v=|\/)([0-9A-Za-z_-]{11}).*/;
+  const m = url.match(r);
+  return m ? m[1] : "";
+}
+
+// مراقبة الفيديوهات لتشغيلها/إيقافها تلقائياً
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    const id = entry.target.dataset.videoId;
+    const player = players[id];
+    if (!player) return;
+
+    if (entry.isIntersecting) {
+      player.playVideo();
+    } else {
+      player.pauseVideo();
+    }
+  });
+}, { threshold: 0.7 });
+
+function observeVideos() {
+  document.querySelectorAll(".video-container")
+    .forEach(v => observer.observe(v));
+}
+
+// تسجيل الفيديو كمشاهد
+function markVideoWatched(videoId) {
+  if (!watchedVideos.has(videoId)) {
+    watchedVideos.add(videoId);
+    updateEarnedAmount();
+    const userRef = doc(db, "users", auth.currentUser.uid);
+    setDoc(userRef, { watchedVideos: Array.from(watchedVideos) }, { merge: true });
+  }
+}
+
+// إضافة فيديو جديد للمشرف
+addVideoBtn.addEventListener("click", async () => {
+  const link = videoLinkInput.value.trim();
+  const region = videoRegionSelect.value;
+  if (!link || !region) return alert("الرجاء تعبئة جميع الحقول.");
+
+  await addDoc(collection(db, "videos"), {
+    link: link,
+    region: region
+  });
+
+  videoLinkInput.value = "";
+  videoRegionSelect.value = "";
+  loadVideos();
+});
+</script>
+
+</body>
+</html>
