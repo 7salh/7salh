@@ -1,238 +1,68 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء حساب</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027);
-      background-size: 400% 400%;
-      animation: gradientMove 12s ease infinite;
-      font-family: 'Tahoma', sans-serif;
-      color: #fff;
-      text-align: center;
-    }
-
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 30px;
-      letter-spacing: 3px;
-      text-shadow: 0 0 15px #00e6ff, 0 0 30px #00e6ff;
-    }
-
-    form {
-      display: flex;
-      flex-direction: column;
-      width: 300px;
-    }
-
-    input, select {
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 20px;
-      border: 2px solid #00e6ff;
-      background: rgba(0,0,0,0.2);
-      color: #fff;
-      font-size: 1rem;
-      text-align: right;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-
-    input:focus, select:focus {
-      background: rgba(0,0,0,0.4);
-      box-shadow: 0 0 15px #00e6ff;
-      border-color: #00e6ff;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 12px;
-      border-radius: 30px;
-      border: 2px solid #00e6ff;
-      background: rgba(0,230,255,0.1);
-      color: #00e6ff;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      background: #00e6ff;
-      color: #000;
-      box-shadow: 0 0 20px #00e6ff, 0 0 40px #00e6ff;
-    }
-
-    .error {
-      color: #ff4d4d;
-      font-size: 0.9rem;
-      margin-top: -5px;
-      margin-bottom: 10px;
-      text-align: right;
-    }
-
-    .success {
-      color: #00ffb3;
-      font-size: 1rem;
-      margin-top: 10px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إنشاء حساب</title>
+<style>
+body { font-family: Tahoma, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; background:#222; color:#fff; }
+form { display:flex; flex-direction:column; gap:10px; background:#333; padding:20px; border-radius:10px; }
+input { padding:10px; border:none; border-radius:5px; }
+button { padding:10px; background:#4CAF50; color:#fff; border:none; border-radius:5px; cursor:pointer; }
+button:hover { background:#45a049; }
+</style>
 </head>
 <body>
-  <h1>إنشاء حساب جديد</h1>
 
-  <form id="signupForm">
-    <input type="text" id="username" placeholder="اسم المستخدم" required>
-    <input type="email" id="email" placeholder="البريد الإلكتروني" required>
-    <input type="password" id="password" placeholder="كلمة المرور" required>
-    <input type="password" id="confirmPassword" placeholder="تأكيد كلمة المرور" required>
-    <input type="number" id="age" placeholder="العمر" min="10" max="100" required>
+<form id="signupForm">
+  <h2>إنشاء حساب جديد</h2>
+  <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+  <input type="password" id="password" placeholder="كلمة المرور" required>
+  <button type="submit">تسجيل</button>
+  <p>لديك حساب؟ <a href="login.html" style="color:#4CAF50;">تسجيل الدخول</a></p>
+</form>
 
-    <select id="ageGroup" required>
-      <option value="">اختر الفئة العمرية</option>
-      <option value="15-24">15-24</option>
-      <option value="25-30">25-30</option>
-      <option value="31-40">31-40</option>
-      <option value="40+">40+</option>
-    </select>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js"></script>
 
-    <select id="region" required>
-      <option value="">اختر المنطقة</option>
-      <option value="الشرقية">المنطقة الشرقية</option>
-      <option value="الوسطى">المنطقة الوسطى</option>
-      <option value="الغربية">المنطقة الغربية</option>
-    </select>
+<script>
+const firebaseConfig = {
+  apiKey: "API_KEY_HERE",
+  authDomain: "PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://PROJECT_ID.firebaseio.com",
+  projectId: "PROJECT_ID",
+  storageBucket: "PROJECT_ID.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
 
-    <!-- رقم الآيبان -->
-    <input type="text" id="iban" placeholder="رقم الآيبان (يبدأ بـ SA)" required>
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-    <div id="error" class="error"></div>
-    <button type="submit">إنشاء الحساب</button>
-    <div id="success" class="success"></div>
-  </form>
+document.getElementById("signupForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+  firebase.database().ref('users').orderByChild('email').equalTo(email).get()
+  .then((snapshot) => {
+    if(snapshot.exists()){
+      alert("هذا البريد مسجل بالفعل");
+    } else {
+      const newUserRef = firebase.database().ref('users').push();
+      newUserRef.set({ email: email, password: password })
+      .then(() => {
+        alert("تم إنشاء الحساب بنجاح");
+        window.location.href = "login.html";
+      });
+    }
+  }).catch((error) => {
+    console.error(error);
+  });
+});
+</script>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDUW9M48CLaSNKbs-zrpuVl2Tu9EOqLUlA",
-      authDomain: "new-z-o.firebaseapp.com",
-      projectId: "new-z-o",
-      storageBucket: "new-z-o.firebasestorage.app",
-      messagingSenderId: "692467470055",
-      appId: "1:692467470055:web:3b4f4130b09f2044de9c42",
-      measurementId: "G-M8KNYMSY3T"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const signupForm = document.getElementById('signupForm');
-    const errorDiv = document.getElementById('error');
-    const successDiv = document.getElementById('success');
-
-    signupForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorDiv.textContent = '';
-      successDiv.textContent = '';
-
-      const username = document.getElementById('username').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const confirmPassword = document.getElementById('confirmPassword').value;
-      const age = parseInt(document.getElementById('age').value);
-      const ageGroup = document.getElementById('ageGroup').value;
-      const region = document.getElementById('region').value;
-      const iban = document.getElementById('iban').value.trim();
-
-      // التحقق من كلمة المرور
-      const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-      if (!passwordRegex.test(password)) {
-        errorDiv.textContent = "كلمة المرور يجب أن تحتوي على حروف وأرقام ولا تقل عن 6 خانات.";
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        errorDiv.textContent = "كلمة المرور وتأكيدها غير متطابقين.";
-        return;
-      }
-
-      // التحقق من الفئة العمرية
-      if (
-        (ageGroup === "15-24" && (age < 15 || age > 24)) ||
-        (ageGroup === "25-30" && (age < 25 || age > 30)) ||
-        (ageGroup === "31-40" && (age < 31 || age > 40)) ||
-        (ageGroup === "40+" && age < 40)
-      ) {
-        errorDiv.textContent = "العمر لا يتطابق مع الفئة العمرية.";
-        return;
-      }
-
-      if (!age || !ageGroup || !region) {
-        errorDiv.textContent = "الرجاء تعبئة جميع الحقول.";
-        return;
-      }
-
-      // التحقق من الآيبان
-      const ibanRegex = /^SA\d{0,15}$/; // SA + حتى 15 رقم = الحد الأقصى 17 خانة
-      if (!ibanRegex.test(iban)) {
-        errorDiv.textContent = "رقم الآيبان يجب أن يبدأ بـ SA ولا يتجاوز 17 خانة.";
-        return;
-      }
-
-      try {
-        // إنشاء الحساب في Firebase Authentication
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: username });
-
-        // حفظ كل البيانات في Firestore
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          displayName: username,
-          email: email,
-          age: age,
-          ageGroup: ageGroup,
-          region: region,
-          iban: iban
-        });
-
-        successDiv.textContent = "تم إنشاء الحساب بنجاح! جاري تحويلك للصفحة الرئيسية...";
-        signupForm.reset();
-
-        // تحويل تلقائي بعد 1.5 ثانية
-        setTimeout(() => {
-          window.location.href = "index.html";
-        }, 1500);
-
-      } catch (err) {
-        // عرض الأخطاء بشكل مبسط للمستخدم
-        if (err.code === "auth/email-already-in-use") {
-          errorDiv.textContent = "هذا البريد الإلكتروني مستخدم مسبقًا.";
-        } else if (err.code === "auth/invalid-email") {
-          errorDiv.textContent = "صيغة البريد الإلكتروني غير صحيحة.";
-        } else if (err.code === "auth/weak-password") {
-          errorDiv.textContent = "كلمة المرور ضعيفة.";
-        } else {
-          errorDiv.textContent = "حدث خطأ غير متوقع، حاول مرة أخرى.";
-        }
-      }
-    });
-  </script>
 </body>
 </html>
