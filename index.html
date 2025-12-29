@@ -6,16 +6,90 @@
 <title>الصفحة الرئيسية</title>
 
 <style>
-html, body { margin: 0; height: 100%; overflow: hidden; font-family: Tahoma, sans-serif; color: #fff; }
-body { background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027); background-size: 400% 400%; animation: gradientMove 12s ease infinite; }
-@keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-#topBar { position: fixed; top: 0; width: 100%; height: 50px; background: rgba(0,0,0,0.7); display: flex; justify-content: space-between; align-items: center; padding: 0 20px; z-index: 100; }
-#earnedAmount { color: gold; font-weight: bold; }
-#logoutBtn { padding: 5px 10px; border-radius: 10px; border: none; cursor: pointer; background: #00e6ff; color: #000; font-weight: bold; }
-#videosContainer { margin-top: 50px; height: calc(100vh - 50px); overflow-y: scroll; scroll-snap-type: y mandatory; }
-.video-container { height: calc(100vh - 50px); scroll-snap-align: start; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-#addVideoForm { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111; padding: 15px; border-radius: 10px; z-index: 200; }
-#addVideoForm input, #addVideoForm select, #addVideoForm button { display: block; width: 100%; margin: 5px 0; padding: 8px; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: Tahoma, sans-serif;
+  color: #fff;
+}
+
+body {
+  background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027);
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease infinite;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#topBar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 50px;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  z-index: 100;
+}
+
+#earnedAmount {
+  color: gold;
+  font-weight: bold;
+}
+
+#logoutBtn {
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: #00e6ff;
+  color: #000;
+  font-weight: bold;
+}
+
+#videosContainer {
+  margin-top: 50px;
+  height: calc(100vh - 50px);
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+}
+
+.video-container {
+  height: calc(100vh - 50px);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#addVideoForm {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111;
+  padding: 15px;
+  border-radius: 10px;
+  z-index: 200;
+}
+
+#addVideoForm input,
+#addVideoForm select,
+#addVideoForm button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+}
 </style>
 </head>
 
@@ -47,7 +121,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-// 🔹 Firebase Config الجديد لمشروعك
+// 🔹 هنا firebaseConfig الجديد لمشروعك "salh-2e2e7"
 const firebaseConfig = {
   apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
   authDomain: "salh-2e2e7.firebaseapp.com",
@@ -83,22 +157,22 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) return location.href = "login.html";
 
   const userSnap = await getDoc(doc(db, "users", user.uid));
-  if (!userSnap.exists()) {
-    console.error("بيانات المستخدم غير موجودة!");
-    return;
-  }
-
   currentUserData = userSnap.data();
+
   watchedVideos = new Set(currentUserData?.watchedVideos || []);
   updateEarnedAmount();
 
-  if (currentUserData?.role === "admin") addVideoForm.style.display = "block";
+  if (currentUserData?.role === "admin") {
+    addVideoForm.style.display = "block";
+  }
 
   loadVideos();
 });
 
 // تسجيل الخروج
-logoutBtn.addEventListener("click", () => signOut(auth).then(() => location.href = "login.html"));
+logoutBtn.addEventListener("click", () => {
+  signOut(auth).then(() => location.href = "login.html");
+});
 
 // تحميل الفيديوهات
 async function loadVideos() {
@@ -119,6 +193,7 @@ async function loadVideos() {
 
     const playerDiv = document.createElement("div");
     playerDiv.id = "player_" + id;
+
     container.appendChild(playerDiv);
     videosContainer.appendChild(container);
 
@@ -150,12 +225,18 @@ const observer = new IntersectionObserver(entries => {
     const id = entry.target.dataset.videoId;
     const player = players[id];
     if (!player) return;
-    entry.isIntersecting ? player.playVideo() : player.pauseVideo();
+
+    if (entry.isIntersecting) {
+      player.playVideo();
+    } else {
+      player.pauseVideo();
+    }
   });
 }, { threshold: 0.7 });
 
 function observeVideos() {
-  document.querySelectorAll(".video-container").forEach(v => observer.observe(v));
+  document.querySelectorAll(".video-container")
+    .forEach(v => observer.observe(v));
 }
 
 // تسجيل الفيديو كمشاهد
@@ -174,7 +255,11 @@ addVideoBtn.addEventListener("click", async () => {
   const region = videoRegionSelect.value;
   if (!link || !region) return alert("الرجاء تعبئة جميع الحقول.");
 
-  await addDoc(collection(db, "videos"), { link: link, region: region });
+  await addDoc(collection(db, "videos"), {
+    link: link,
+    region: region
+  });
+
   videoLinkInput.value = "";
   videoRegionSelect.value = "";
   loadVideos();
