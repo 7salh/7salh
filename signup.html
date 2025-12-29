@@ -1,72 +1,139 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إنشاء حساب</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027);
+      background-size: 400% 400%;
+      animation: gradientMove 12s ease infinite;
+      font-family: 'Tahoma', sans-serif;
+      color: #fff;
+      text-align: center;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    h1 { font-size: 2.5rem; margin-bottom: 30px; letter-spacing: 3px; text-shadow: 0 0 15px #00e6ff, 0 0 30px #00e6ff; }
+    form { display: flex; flex-direction: column; width: 300px; }
+    input, select { padding: 12px; margin: 10px 0; border-radius: 20px; border: 2px solid #00e6ff; background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; text-align: right; outline: none; transition: all 0.3s ease; }
+    input:focus, select:focus { background: rgba(0,0,0,0.4); box-shadow: 0 0 15px #00e6ff; border-color: #00e6ff; }
+    button { margin-top: 20px; padding: 12px; border-radius: 30px; border: 2px solid #00e6ff; background: rgba(0,230,255,0.1); color: #00e6ff; font-size: 1.2rem; cursor: pointer; transition: all 0.3s ease; }
+    button:hover { background: #00e6ff; color: #000; box-shadow: 0 0 20px #00e6ff, 0 0 40px #00e6ff; }
+    .error { color: #ff4d4d; font-size: 0.9rem; margin-top: -5px; margin-bottom: 10px; text-align: right; }
+    .success { color: #00ffb3; font-size: 1rem; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>إنشاء حساب جديد</h1>
 
-// 🔹 استخدم هنا firebaseConfig الجديد من مشروعك
-const firebaseConfig = {
-  apiKey: "AIzaSyXXXX...",
-  authDomain: "7salh.firebaseapp.com",
-  projectId: "7salh",
-  storageBucket: "7salh.appspot.com",
-  messagingSenderId: "XXXX",
-  appId: "1:XXXX:web:XXXX",
-  measurementId: "G-XXXX"
-};
+  <form id="signupForm">
+    <input type="text" id="username" placeholder="اسم المستخدم" required>
+    <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+    <input type="password" id="password" placeholder="كلمة المرور" required>
+    <input type="password" id="confirmPassword" placeholder="تأكيد كلمة المرور" required>
+    <input type="number" id="age" placeholder="العمر" min="10" max="100" required>
+    <select id="ageGroup" required>
+      <option value="">اختر الفئة العمرية</option>
+      <option value="15-24">15-24</option>
+      <option value="25-30">25-30</option>
+      <option value="31-40">31-40</option>
+      <option value="40+">40+</option>
+    </select>
+    <select id="region" required>
+      <option value="">اختر المنطقة</option>
+      <option value="الشرقية">المنطقة الشرقية</option>
+      <option value="الوسطى">المنطقة الوسطى</option>
+      <option value="الغربية">المنطقة الغربية</option>
+    </select>
 
-const app = initializeApp(firebaseConfig);
-console.log("Connected Firebase Project ID:", app.options.projectId);
+    <div id="error" class="error"></div>
+    <button type="submit">إنشاء الحساب</button>
+    <div id="success" class="success"></div>
+  </form>
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+  <p style="margin-top:15px; cursor:pointer; color:#00e6ff;" onclick="window.location.href='login.html'">
+    لديك حساب؟ تسجيل الدخول
+  </p>
 
-const signupForm = document.getElementById('signupForm');
-const errorDiv = document.getElementById('error');
-const successDiv = document.getElementById('success');
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-signupForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  errorDiv.textContent = '';
-  successDiv.textContent = '';
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
+      authDomain: "salh-2e2e7.firebaseapp.com",
+      projectId: "salh-2e2e7",
+      storageBucket: "salh-2e2e7.firebasestorage.app",
+      messagingSenderId: "362668627160",
+      appId: "1:362668627160:web:088c3cf40ca403453273ad",
+      measurementId: "G-EEY7LXZQHL"
+    };
 
-  const username = document.getElementById('username').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const password = document.getElementById('password').value;
-  const confirmPassword = document.getElementById('confirmPassword').value;
-  const age = document.getElementById('age').value;
-  const ageGroup = document.getElementById('ageGroup').value;
-  const region = document.getElementById('region').value;
+    const app = initializeApp(firebaseConfig);
+    console.log("Connected Firebase Project ID:", app.options.projectId);
 
-  if (password !== confirmPassword) {
-    errorDiv.textContent = "كلمة المرور وتأكيدها غير متطابقين.";
-    return;
-  }
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  try {
-    // إنشاء الحساب في Authentication
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCredential.user, { displayName: username });
+    const signupForm = document.getElementById('signupForm');
+    const errorDiv = document.getElementById('error');
+    const successDiv = document.getElementById('success');
 
-    // إضافة المستخدم إلى Firestore
-    await setDoc(doc(db, "users", userCredential.user.uid), {
-      displayName: username,
-      email: email,
-      age: parseInt(age),
-      ageGroup: ageGroup,
-      region: region,
-      createdAt: new Date()
+    signupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorDiv.textContent = '';
+      successDiv.textContent = '';
+
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const age = document.getElementById('age').value;
+      const ageGroup = document.getElementById('ageGroup').value;
+      const region = document.getElementById('region').value;
+
+      if (password !== confirmPassword) {
+        errorDiv.textContent = "كلمة المرور وتأكيدها غير متطابقين.";
+        return;
+      }
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: username });
+
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          displayName: username,
+          email: email,
+          age: parseInt(age),
+          ageGroup: ageGroup,
+          region: region,
+          createdAt: new Date()
+        });
+
+        successDiv.textContent = "تم إنشاء الحساب بنجاح!";
+        signupForm.reset();
+
+        setTimeout(() => {
+          window.location.href = "login.html";
+        }, 1500);
+
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = err.message;
+      }
     });
-
-    successDiv.textContent = "تم إنشاء الحساب بنجاح!";
-    signupForm.reset();
-
-    setTimeout(() => {
-      window.location.href = "login.html"; // تحويل لتسجيل الدخول
-    }, 1500);
-
-  } catch (err) {
-    console.error(err);
-    errorDiv.textContent = err.message;
-  }
-});
-</script>
+  </script>
+</body>
+</html>
