@@ -19,11 +19,7 @@
       color: #fff;
       text-align: center;
     }
-    @keyframes gradientMove {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    @keyframes gradientMove { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
     h1 { font-size: 2.5rem; margin-bottom: 30px; letter-spacing: 3px; text-shadow: 0 0 15px #00e6ff, 0 0 30px #00e6ff; }
     form { display: flex; flex-direction: column; width: 300px; }
     input, select { padding: 12px; margin: 10px 0; border-radius: 20px; border: 2px solid #00e6ff; background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; text-align: right; outline: none; transition: all 0.3s ease; }
@@ -36,7 +32,6 @@
 </head>
 <body>
   <h1>إنشاء حساب جديد</h1>
-
   <form id="signupForm">
     <input type="text" id="username" placeholder="اسم المستخدم" required>
     <input type="email" id="email" placeholder="البريد الإلكتروني" required>
@@ -56,15 +51,10 @@
       <option value="الوسطى">المنطقة الوسطى</option>
       <option value="الغربية">المنطقة الغربية</option>
     </select>
-
     <div id="error" class="error"></div>
     <button type="submit">إنشاء الحساب</button>
     <div id="success" class="success"></div>
   </form>
-
-  <p style="margin-top:15px; cursor:pointer; color:#00e6ff;" onclick="window.location.href='login.html'">
-    لديك حساب؟ تسجيل الدخول
-  </p>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -82,8 +72,6 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    console.log("Connected Firebase Project ID:", app.options.projectId);
-
     const auth = getAuth(app);
     const db = getFirestore(app);
 
@@ -104,33 +92,42 @@
       const ageGroup = document.getElementById('ageGroup').value;
       const region = document.getElementById('region').value;
 
+      if (password.length < 6) {
+        errorDiv.textContent = "كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل.";
+        return;
+      }
       if (password !== confirmPassword) {
         errorDiv.textContent = "كلمة المرور وتأكيدها غير متطابقين.";
         return;
       }
+      if (!age || !ageGroup || !region) {
+        errorDiv.textContent = "الرجاء تعبئة جميع الحقول.";
+        return;
+      }
 
       try {
+        // إنشاء الحساب
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: username });
 
+        // حفظ بيانات المستخدم في Firestore
         await setDoc(doc(db, "users", userCredential.user.uid), {
           displayName: username,
           email: email,
           age: parseInt(age),
           ageGroup: ageGroup,
           region: region,
-          createdAt: new Date()
+          role: "user",           // يمكن تعديلها لاحقاً
+          watchedVideos: []       // تهيئة قائمة الفيديوهات
         });
 
-        successDiv.textContent = "تم إنشاء الحساب بنجاح!";
-        signupForm.reset();
+        successDiv.textContent = "تم إنشاء الحساب بنجاح! جاري تحويلك للصفحة الرئيسية...";
 
-        setTimeout(() => {
-          window.location.href = "login.html";
-        }, 1500);
+        // تحويل مباشر للصفحة الرئيسية
+        setTimeout(() => { window.location.href = "index.html"; }, 1500);
 
       } catch (err) {
-        console.error(err);
+        console.log(err); // لعرض سبب الفشل في console
         errorDiv.textContent = err.message;
       }
     });
