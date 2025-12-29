@@ -1,57 +1,86 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول</title>
+  <style>
+    body { margin:0; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027); background-size:400% 400%; animation:gradientMove 12s ease infinite; font-family:'Tahoma',sans-serif; color:#fff; text-align:center; }
+    @keyframes gradientMove { 0% {background-position:0% 50%;} 50% {background-position:100% 50%;} 100% {background-position:0% 50%;} }
+    h1 { font-size:2.5rem; margin-bottom:30px; letter-spacing:3px; text-shadow:0 0 15px #00e6ff,0 0 30px #00e6ff; }
+    form { display:flex; flex-direction:column; width:300px; }
+    input { padding:12px; margin:10px 0; border-radius:20px; border:2px solid #00e6ff; background:rgba(0,0,0,0.2); color:#fff; font-size:1rem; text-align:right; outline:none; transition:all 0.3s ease; }
+    input:focus { background: rgba(0,0,0,0.4); box-shadow:0 0 15px #00e6ff; border-color:#00e6ff; }
+    button { margin-top:20px; padding:12px; border-radius:30px; border:2px solid #00e6ff; background:rgba(0,230,255,0.1); color:#00e6ff; font-size:1.2rem; cursor:pointer; transition:all 0.3s ease; }
+    button:hover { background:#00e6ff; color:#000; box-shadow:0 0 20px #00e6ff,0 0 40px #00e6ff; }
+    .error { color:#ff4d4d; font-size:0.9rem; margin-top:-5px; margin-bottom:10px; text-align:right; }
+  </style>
+</head>
+<body>
+  <h1>تسجيل الدخول</h1>
+  <form id="loginForm">
+    <input type="text" id="identifier" placeholder="البريد الإلكتروني أو اسم المستخدم" required>
+    <input type="password" id="password" placeholder="كلمة المرور" required>
+    <div id="error" class="error"></div>
+    <button type="submit">تسجيل الدخول</button>
+  </form>
 
-// 🔹 استخدم نفس firebaseConfig الجديد
-const firebaseConfig = {
-  apiKey: "AIzaSyXXXX...",
-  authDomain: "7salh.firebaseapp.com",
-  projectId: "7salh",
-  storageBucket: "7salh.appspot.com",
-  messagingSenderId: "XXXX",
-  appId: "1:XXXX:web:XXXX",
-  measurementId: "G-XXXX"
-};
+  <p style="margin-top:15px; cursor:pointer; color:#00e6ff;" onclick="window.location.href='signup.html'">
+    ليس لديك حساب؟ إنشاء حساب
+  </p>
 
-const app = initializeApp(firebaseConfig);
-console.log("Connected Firebase Project ID:", app.options.projectId);
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-const auth = getAuth(app);
-const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
+      authDomain: "salh-2e2e7.firebaseapp.com",
+      projectId: "salh-2e2e7",
+      storageBucket: "salh-2e2e7.firebasestorage.app",
+      messagingSenderId: "362668627160",
+      appId: "1:362668627160:web:088c3cf40ca403453273ad",
+      measurementId: "G-EEY7LXZQHL"
+    };
 
-const loginForm = document.getElementById('loginForm');
-const errorDiv = document.getElementById('error');
+    const app = initializeApp(firebaseConfig);
+    console.log("Connected Firebase Project ID:", app.options.projectId);
 
-loginForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  errorDiv.textContent = '';
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  const identifier = document.getElementById('identifier').value.trim();
-  const password = document.getElementById('password').value;
-  let emailToUse = identifier;
+    const loginForm = document.getElementById('loginForm');
+    const errorDiv = document.getElementById('error');
 
-  try {
-    // إذا المدخل ليس بريدًا، نبحث عن البريد المرتبط باسم المستخدم في Firestore
-    if (!identifier.includes('@')) {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("displayName", "==", identifier));
-      const querySnapshot = await getDocs(q);
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorDiv.textContent = '';
 
-      if (querySnapshot.empty) throw new Error("اسم المستخدم غير موجود.");
-      emailToUse = querySnapshot.docs[0].data().email;
-    }
+      const identifier = document.getElementById('identifier').value.trim();
+      const password = document.getElementById('password').value;
+      let emailToUse = identifier;
 
-    // تسجيل الدخول باستخدام البريد
-    const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password);
-    console.log("Logged in user UID:", userCredential.user.uid);
+      try {
+        if (!identifier.includes('@')) {
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("displayName", "==", identifier));
+          const querySnapshot = await getDocs(q);
 
-    // تحويل المستخدم للصفحة الرئيسية بعد تسجيل الدخول
-    window.location.href = "index.html";
+          if (querySnapshot.empty) throw new Error("اسم المستخدم غير موجود.");
+          emailToUse = querySnapshot.docs[0].data().email;
+        }
 
-  } catch (err) {
-    console.error(err);
-    errorDiv.textContent = err.message;
-  }
-});
-</script>
+        const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password);
+        console.log("Logged in UID:", userCredential.user.uid);
+
+        window.location.href = "index.html";
+
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>
