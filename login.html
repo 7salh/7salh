@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إنشاء حساب</title>
+<title>تسجيل الدخول</title>
 <style>
 body {
   margin: 0;
@@ -22,37 +22,24 @@ body {
 @keyframes gradientMove { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
 h1 { font-size: 2.5rem; margin-bottom: 30px; letter-spacing: 3px; text-shadow: 0 0 15px #00e6ff, 0 0 30px #00e6ff; }
 form { display: flex; flex-direction: column; width: 300px; }
-input, select, button { padding: 12px; margin: 10px 0; border-radius: 20px; border: 2px solid #00e6ff; background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; text-align: right; outline: none; transition: all 0.3s ease; }
-input:focus, select:focus { background: rgba(0,0,0,0.4); box-shadow: 0 0 15px #00e6ff; border-color: #00e6ff; }
+input, button { padding: 12px; margin: 10px 0; border-radius: 20px; border: 2px solid #00e6ff; background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; text-align: right; outline: none; transition: all 0.3s ease; }
+input:focus { background: rgba(0,0,0,0.4); box-shadow: 0 0 15px #00e6ff; border-color: #00e6ff; }
 button { cursor: pointer; font-size: 1.2rem; background: #00e6ff; color: #000; }
 .error { color: #ff4d4d; font-size: 0.9rem; margin-top: -5px; margin-bottom: 10px; text-align: right; }
+p { margin-top: 15px; cursor: pointer; color: #00e6ff; }
 </style>
 </head>
 <body>
 
-<h1>إنشاء حساب جديد</h1>
-<form id="signupForm">
-  <input type="text" id="username" placeholder="اسم المستخدم" required>
-  <input type="email" id="email" placeholder="البريد الإلكتروني" required>
+<h1>تسجيل الدخول</h1>
+<form id="loginForm">
+  <input type="text" id="identifier" placeholder="البريد الإلكتروني أو اسم المستخدم" required>
   <input type="password" id="password" placeholder="كلمة المرور" required>
-  <input type="password" id="confirmPassword" placeholder="تأكيد كلمة المرور" required>
-  <input type="number" id="age" placeholder="العمر" min="10" max="100" required>
-  <select id="ageGroup" required>
-    <option value="">اختر الفئة العمرية</option>
-    <option value="15-24">15-24</option>
-    <option value="25-30">25-30</option>
-    <option value="31-40">31-40</option>
-    <option value="40+">40+</option>
-  </select>
-  <select id="region" required>
-    <option value="">اختر المنطقة</option>
-    <option value="الشرقية">المنطقة الشرقية</option>
-    <option value="الوسطى">المنطقة الوسطى</option>
-    <option value="الغربية">المنطقة الغربية</option>
-  </select>
   <div id="error" class="error"></div>
-  <button type="submit">إنشاء الحساب</button>
+  <button type="submit">تسجيل الدخول</button>
 </form>
+
+<p onclick="window.location.href='signup.html'">ليس لديك حساب؟ إنشاء حساب</p>
 
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
@@ -73,50 +60,32 @@ button { cursor: pointer; font-size: 1.2rem; background: #00e6ff; color: #000; }
   const auth = firebase.auth();
   const db = firebase.firestore();
 
-  const signupForm = document.getElementById('signupForm');
+  const loginForm = document.getElementById('loginForm');
   const errorDiv = document.getElementById('error');
 
-  signupForm.addEventListener('submit', async (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorDiv.textContent = '';
 
-    const username = document.getElementById('username').value.trim();
-    const email = document.getElementById('email').value.trim();
+    const identifier = document.getElementById('identifier').value.trim();
     const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const age = document.getElementById('age').value;
-    const ageGroup = document.getElementById('ageGroup').value;
-    const region = document.getElementById('region').value;
 
-    if(password.length < 6){ errorDiv.textContent="كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل."; return; }
-    if(password !== confirmPassword){ errorDiv.textContent="كلمة المرور وتأكيدها غير متطابقين."; return; }
+    try {
+      let emailToUse = identifier;
 
-    try{
-      const methods = await auth.fetchSignInMethodsForEmail(email);
+      if(!identifier.includes('@')) {
+        // إذا أدخل المستخدم اسم المستخدم بدل البريد
+        const usersRef = db.collection("users");
+        const querySnapshot = await usersRef.where("displayName", "==", identifier).get();
 
-      if(methods.length > 0){
-        // البريد موجود → تسجيل الدخول مباشرة
-        await auth.signInWithEmailAndPassword(email, password);
-      } else {
-        // البريد غير موجود → إنشاء الحساب
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        await userCredential.user.updateProfile({ displayName: username });
-
-        await db.collection("users").doc(userCredential.user.uid).set({
-          displayName: username,
-          email: email,
-          age: parseInt(age),
-          ageGroup: ageGroup,
-          region: region,
-          role: "user",
-          watchedVideos: []
-        });
+        if(querySnapshot.empty) throw new Error("اسم المستخدم غير موجود.");
+        emailToUse = querySnapshot.docs[0].data().email;
       }
 
-      // تحويل مباشر بعد نجاح العملية
-      window.location.href = "login.html";
+      await auth.signInWithEmailAndPassword(emailToUse, password);
+      window.location.href = "index.html";
 
-    } catch(err){
+    } catch(err) {
       console.error(err);
       errorDiv.textContent = err.message;
     }
