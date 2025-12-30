@@ -5,7 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>تسجيل الدخول</title>
   <style>
-    body { margin:0; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027); background-size:400% 400%; animation:gradientMove 12s ease infinite; font-family:'Tahoma',sans-serif; color:#fff; text-align:center; }
+    body {
+      margin:0;
+      height:100vh;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027);
+      background-size:400% 400%;
+      animation:gradientMove 12s ease infinite;
+      font-family:'Tahoma',sans-serif;
+      color:#fff;
+      text-align:center;
+    }
     @keyframes gradientMove { 0% {background-position:0% 50%;} 50% {background-position:100% 50%;} 100% {background-position:0% 50%;} }
     h1 { font-size:2.5rem; margin-bottom:30px; letter-spacing:3px; text-shadow:0 0 15px #00e6ff,0 0 30px #00e6ff; }
     form { display:flex; flex-direction:column; width:300px; }
@@ -45,8 +58,6 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    console.log("Connected Firebase Project ID:", app.options.projectId);
-
     const auth = getAuth(app);
     const db = getFirestore(app);
 
@@ -62,23 +73,33 @@
       let emailToUse = identifier;
 
       try {
+        // إذا المستخدم أدخل اسم وليس بريد
         if (!identifier.includes('@')) {
-          const usersRef = collection(db, "users");
-          const q = query(usersRef, where("displayName", "==", identifier));
-          const querySnapshot = await getDocs(q);
+          const q = query(collection(db, "users"), where("displayName", "==", identifier));
+          const snap = await getDocs(q);
 
-          if (querySnapshot.empty) throw new Error("اسم المستخدم غير موجود.");
-          emailToUse = querySnapshot.docs[0].data().email;
+          if (snap.empty) {
+            errorDiv.textContent = "اسم المستخدم غير موجود.";
+            return;
+          }
+          emailToUse = snap.docs[0].data().email;
         }
 
-        const userCredential = await signInWithEmailAndPassword(auth, emailToUse, password);
-        console.log("Logged in UID:", userCredential.user.uid);
+        // تسجيل الدخول بالبريد
+        await signInWithEmailAndPassword(auth, emailToUse, password);
 
+        // التحويل مباشرة بعد تسجيل الدخول
         window.location.href = "index.html";
 
       } catch (err) {
-        console.error(err);
-        errorDiv.textContent = err.message;
+        console.log(err);
+        if (err.code === "auth/wrong-password") {
+          errorDiv.textContent = "كلمة المرور غير صحيحة.";
+        } else if (err.code === "auth/user-not-found") {
+          errorDiv.textContent = "الحساب غير موجود.";
+        } else {
+          errorDiv.textContent = "حدث خطأ أثناء تسجيل الدخول.";
+        }
       }
     });
   </script>
