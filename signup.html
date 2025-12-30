@@ -97,7 +97,7 @@
         const methods = await auth.fetchSignInMethodsForEmail(email);
 
         if (methods.length > 0) {
-          // البريد موجود → تسجيل الدخول
+          // البريد موجود → تسجيل الدخول مباشرة
           await auth.signInWithEmailAndPassword(email, password);
         } else {
           // البريد غير موجود → إنشاء الحساب
@@ -115,7 +115,7 @@
           });
         }
 
-        // بعد كل شيء → التحويل إلى login.html
+        // بعد نجاح العملية → تحويل إلى صفحة تسجيل الدخول
         window.location.href = "login.html";
 
       } catch (err) {
