@@ -54,13 +54,13 @@
     <button type="submit">إنشاء الحساب</button>
   </form>
 
-  <!-- Firebase JS SDKs -->
+  <!-- Firebase SDKs التقليدية -->
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
 
   <script>
-    // 🔹 إعداد Firebase
+    // إعداد Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
       authDomain: "salh-2e2e7.firebaseapp.com",
@@ -115,7 +115,7 @@
           });
         }
 
-        // التحويل مباشرة إلى صفحة تسجيل الدخول
+        // بعد كل شيء → التحويل إلى login.html
         window.location.href = "login.html";
 
       } catch (err) {
