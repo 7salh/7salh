@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء حساب</title>
+  <title>إنشاء حساب </title>
   <style>
     body {
       margin: 0;
@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>إنشاء حساب جديد</h1>
+  <h1>إنشاء حساب جديد / تسجيل دخول</h1>
   <form id="signupForm">
     <input type="text" id="username" placeholder="اسم المستخدم" required>
     <input type="email" id="email" placeholder="البريد الإلكتروني" required>
@@ -58,7 +58,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -100,9 +100,20 @@
       }
 
       try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: username });
+        // التحقق إذا البريد موجود مسبقًا
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+        let userCredential;
 
+        if (methods.length > 0) {
+          // البريد موجود → تسجيل الدخول
+          userCredential = await signInWithEmailAndPassword(auth, email, password);
+        } else {
+          // البريد غير موجود → إنشاء الحساب
+          userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          await updateProfile(userCredential.user, { displayName: username });
+        }
+
+        // حفظ البيانات في Firestore دائماً
         await setDoc(doc(db, "users", userCredential.user.uid), {
           displayName: username,
           email: email,
@@ -111,9 +122,9 @@
           region: region,
           role: "user",
           watchedVideos: []
-        });
+        }, { merge: true });
 
-        // التحويل مباشرة بعد إنشاء الحساب
+        // التحويل مباشرة بعد إنشاء الحساب أو تسجيل الدخول
         window.location.href = "index.html";
 
       } catch (err) {
