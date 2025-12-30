@@ -27,11 +27,10 @@
     button { margin-top: 20px; padding: 12px; border-radius: 30px; border: 2px solid #00e6ff; background: rgba(0,230,255,0.1); color: #00e6ff; font-size: 1.2rem; cursor: pointer; transition: all 0.3s ease; }
     button:hover { background: #00e6ff; color: #000; box-shadow: 0 0 20px #00e6ff, 0 0 40px #00e6ff; }
     .error { color: #ff4d4d; font-size: 0.9rem; margin-top: -5px; margin-bottom: 10px; text-align: right; }
-    .success { color: #00ffb3; font-size: 1rem; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <h1>إنشاء حساب جديد / تسجيل دخول</h1>
+  <h1>إنشاء حساب جديد</h1>
   <form id="signupForm">
     <input type="text" id="username" placeholder="اسم المستخدم" required>
     <input type="email" id="email" placeholder="البريد الإلكتروني" required>
@@ -53,7 +52,6 @@
     </select>
     <div id="error" class="error"></div>
     <button type="submit">إنشاء الحساب</button>
-    <div id="success" class="success"></div>
   </form>
 
   <script type="module">
@@ -101,30 +99,29 @@
 
       try {
         const methods = await fetchSignInMethodsForEmail(auth, email);
-        let userCredential;
 
         if (methods.length > 0) {
           // البريد موجود → تسجيل الدخول مباشرة
-          userCredential = await signInWithEmailAndPassword(auth, email, password);
+          await signInWithEmailAndPassword(auth, email, password);
         } else {
           // البريد غير موجود → إنشاء الحساب
-          userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           await updateProfile(userCredential.user, { displayName: username });
+
+          // حفظ بيانات المستخدم في Firestore
+          await setDoc(doc(db, "users", userCredential.user.uid), {
+            displayName: username,
+            email: email,
+            age: parseInt(age),
+            ageGroup: ageGroup,
+            region: region,
+            role: "user",
+            watchedVideos: []
+          }, { merge: true });
         }
 
-        // حفظ البيانات في Firestore دائماً
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          displayName: username,
-          email: email,
-          age: parseInt(age),
-          ageGroup: ageGroup,
-          region: region,
-          role: "user",
-          watchedVideos: []
-        }, { merge: true });
-
-        // التحويل مباشرة بعد النجاح
-        window.location.href = "index.html";
+        // التحويل مباشرة إلى صفحة تسجيل الدخول
+        window.location.href = "login.html";
 
       } catch (err) {
         console.log(err);
