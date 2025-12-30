@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء حساب / تسجيل دخول</title>
+  <title>إنشاء حساب</title>
   <style>
     body {
       margin: 0;
@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>إنشاء حساب جديد / تسجيل دخول</h1>
+  <h1>إنشاء حساب جديد</h1>
   <form id="signupForm">
     <input type="text" id="username" placeholder="اسم المستخدم" required>
     <input type="email" id="email" placeholder="البريد الإلكتروني" required>
@@ -58,7 +58,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
     import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -77,12 +77,10 @@
 
     const signupForm = document.getElementById('signupForm');
     const errorDiv = document.getElementById('error');
-    const successDiv = document.getElementById('success');
 
     signupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorDiv.textContent = '';
-      successDiv.textContent = '';
 
       const username = document.getElementById('username').value.trim();
       const email = document.getElementById('email').value.trim();
@@ -100,26 +98,12 @@
         errorDiv.textContent = "كلمة المرور وتأكيدها غير متطابقين.";
         return;
       }
-      if (!age || !ageGroup || !region) {
-        errorDiv.textContent = "الرجاء تعبئة جميع الحقول.";
-        return;
-      }
 
       try {
-        // التحقق إذا البريد موجود مسبقًا
-        const methods = await fetchSignInMethodsForEmail(auth, email);
-        let user;
-        if (methods.length > 0) {
-          // البريد موجود → تسجيل الدخول
-          user = await signInWithEmailAndPassword(auth, email, password);
-        } else {
-          // البريد غير موجود → إنشاء الحساب
-          user = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(user.user, { displayName: username });
-        }
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, { displayName: username });
 
-        // حفظ البيانات في Firestore دائماً
-        await setDoc(doc(db, "users", user.user.uid), {
+        await setDoc(doc(db, "users", userCredential.user.uid), {
           displayName: username,
           email: email,
           age: parseInt(age),
@@ -127,10 +111,10 @@
           region: region,
           role: "user",
           watchedVideos: []
-        }, { merge: true });
+        });
 
-        successDiv.textContent = "تم إنشاء الحساب/تسجيل الدخول بنجاح! جاري التحويل...";
-        setTimeout(() => { window.location.href = "index.html"; }, 1000);
+        // التحويل مباشرة بعد إنشاء الحساب
+        window.location.href = "index.html";
 
       } catch (err) {
         console.log(err);
