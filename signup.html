@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء حساب / تسجيل دخول</title>
+  <title>إنشاء حساب</title>
   <style>
     body {
       margin: 0;
@@ -54,11 +54,13 @@
     <button type="submit">إنشاء الحساب</button>
   </form>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, fetchSignInMethodsForEmail } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+  <!-- Firebase JS SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
 
+  <script>
+    // 🔹 إعداد Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
       authDomain: "salh-2e2e7.firebaseapp.com",
@@ -69,9 +71,9 @@
       measurementId: "G-EEY7LXZQHL"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
     const signupForm = document.getElementById('signupForm');
     const errorDiv = document.getElementById('error');
@@ -88,28 +90,21 @@
       const ageGroup = document.getElementById('ageGroup').value;
       const region = document.getElementById('region').value;
 
-      if (password.length < 6) {
-        errorDiv.textContent = "كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل.";
-        return;
-      }
-      if (password !== confirmPassword) {
-        errorDiv.textContent = "كلمة المرور وتأكيدها غير متطابقين.";
-        return;
-      }
+      if (password.length < 6) { errorDiv.textContent = "كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل."; return; }
+      if (password !== confirmPassword) { errorDiv.textContent = "كلمة المرور وتأكيدها غير متطابقين."; return; }
 
       try {
-        const methods = await fetchSignInMethodsForEmail(auth, email);
+        const methods = await auth.fetchSignInMethodsForEmail(email);
 
         if (methods.length > 0) {
-          // البريد موجود → تسجيل الدخول مباشرة
-          await signInWithEmailAndPassword(auth, email, password);
+          // البريد موجود → تسجيل الدخول
+          await auth.signInWithEmailAndPassword(email, password);
         } else {
           // البريد غير موجود → إنشاء الحساب
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          await updateProfile(userCredential.user, { displayName: username });
+          const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+          await userCredential.user.updateProfile({ displayName: username });
 
-          // حفظ بيانات المستخدم في Firestore
-          await setDoc(doc(db, "users", userCredential.user.uid), {
+          await db.collection("users").doc(userCredential.user.uid).set({
             displayName: username,
             email: email,
             age: parseInt(age),
@@ -117,14 +112,14 @@
             region: region,
             role: "user",
             watchedVideos: []
-          }, { merge: true });
+          });
         }
 
         // التحويل مباشرة إلى صفحة تسجيل الدخول
         window.location.href = "login.html";
 
       } catch (err) {
-        console.log(err);
+        console.error(err);
         errorDiv.textContent = err.message;
       }
     });
