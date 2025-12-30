@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>إنشاء حساب </title>
+  <title>إنشاء حساب / تسجيل دخول</title>
   <style>
     body {
       margin: 0;
@@ -100,12 +100,11 @@
       }
 
       try {
-        // التحقق إذا البريد موجود مسبقًا
         const methods = await fetchSignInMethodsForEmail(auth, email);
         let userCredential;
 
         if (methods.length > 0) {
-          // البريد موجود → تسجيل الدخول
+          // البريد موجود → تسجيل الدخول مباشرة
           userCredential = await signInWithEmailAndPassword(auth, email, password);
         } else {
           // البريد غير موجود → إنشاء الحساب
@@ -124,7 +123,7 @@
           watchedVideos: []
         }, { merge: true });
 
-        // التحويل مباشرة بعد إنشاء الحساب أو تسجيل الدخول
+        // التحويل مباشرة بعد النجاح
         window.location.href = "index.html";
 
       } catch (err) {
