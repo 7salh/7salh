@@ -10,47 +10,39 @@ body{
   margin:0;
   height:100vh;
   display:flex;
-  flex-direction:column;
   justify-content:center;
   align-items:center;
   background:linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#0f2027);
   background-size:400% 400%;
-  animation:gradientMove 12s ease infinite;
+  animation:move 12s ease infinite;
   font-family:Tahoma;
   color:#fff;
 }
-@keyframes gradientMove{
+@keyframes move{
   0%{background-position:0% 50%}
   50%{background-position:100% 50%}
   100%{background-position:0% 50%}
-}
-h1{
-  margin-bottom:20px;
-  text-shadow:0 0 15px #00e6ff;
 }
 form{
   width:320px;
   display:flex;
   flex-direction:column;
+  gap:10px;
 }
+h1{text-align:center}
 input,select,button{
-  margin:8px 0;
   padding:12px;
   border-radius:20px;
   border:2px solid #00e6ff;
   background:rgba(0,0,0,.2);
   color:#fff;
   font-size:1rem;
-  outline:none;
 }
 button{
   background:#00e6ff;
   color:#000;
   font-weight:bold;
   cursor:pointer;
-}
-button:hover{
-  box-shadow:0 0 15px #00e6ff;
 }
 .error{
   color:#ff4d4d;
@@ -61,29 +53,27 @@ button:hover{
 
 <body>
 
-<h1>إنشاء حساب جديد</h1>
-
 <form id="signupForm">
+  <h1>إنشاء حساب جديد</h1>
+
   <input id="username" placeholder="اسم المستخدم" required>
   <input id="email" type="email" placeholder="البريد الإلكتروني" required>
   <input id="password" type="password" placeholder="كلمة المرور" required>
   <input id="confirm" type="password" placeholder="تأكيد كلمة المرور" required>
 
-  <!-- العمر (قائمة) -->
   <select id="ageGroup" required>
     <option value="">اختر الفئة العمرية</option>
-    <option value="10-18">10 – 18</option>
-    <option value="19-25">19 – 25</option>
-    <option value="25-30">25 – 30</option>
-    <option value="30-40">30 – 40</option>
+    <option value="10-18">10 - 18</option>
+    <option value="19-25">19 - 25</option>
+    <option value="25-30">25 - 30</option>
+    <option value="30-40">30 - 40</option>
     <option value="40+">40+</option>
   </select>
 
-  <!-- IBAN -->
   <input id="iban" placeholder="SAxxxxxxxxxxxxxxxxx" required>
 
   <div id="error" class="error"></div>
-  <button>إنشاء الحساب</button>
+  <button type="submit">إنشاء الحساب</button>
 </form>
 
 <script type="module">
@@ -103,36 +93,43 @@ const db = getFirestore(app);
 
 const form = document.getElementById("signupForm");
 const errorDiv = document.getElementById("error");
+
+const usernameInput = document.getElementById("username");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const confirmInput = document.getElementById("confirm");
+const ageGroupSelect = document.getElementById("ageGroup");
 const ibanInput = document.getElementById("iban");
 
-/* تثبيت SA + 17 رقم */
+/* IBAN: SA + 17 رقم فقط */
 ibanInput.value = "SA";
 ibanInput.addEventListener("input", () => {
   ibanInput.value = "SA" + ibanInput.value.replace(/[^0-9]/g,"").slice(0,17);
 });
 
-form.onsubmit = async e => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   errorDiv.textContent = "";
 
-  const username = username.value.trim();
-  const email = email.value.trim();
-  const pass = password.value;
-  const confirmPass = confirm.value;
-  const ageGroup = ageGroup.value;
+  const username = usernameInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  const confirm = confirmInput.value;
+  const ageGroup = ageGroupSelect.value;
   const iban = ibanInput.value;
 
-  if(pass.length < 6)
-    return errorDiv.textContent="كلمة المرور يجب أن تكون 6 أحرف على الأقل";
+  if(password.length < 6)
+    return errorDiv.textContent = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
 
-  if(pass !== confirmPass)
-    return errorDiv.textContent="كلمتا المرور غير متطابقتين";
+  if(password !== confirm)
+    return errorDiv.textContent = "كلمتا المرور غير متطابقتين";
 
   if(iban.length !== 19)
-    return errorDiv.textContent="رقم الآيبان غير مكتمل";
+    return errorDiv.textContent = "رقم الآيبان غير صحيح";
 
   try{
-    const cred = await createUserWithEmailAndPassword(auth,email,pass);
+    const cred = await createUserWithEmailAndPassword(auth,email,password);
+
     await updateProfile(cred.user,{ displayName: username });
 
     await setDoc(doc(db,"users",cred.user.uid),{
@@ -145,13 +142,13 @@ form.onsubmit = async e => {
       createdAt: Date.now()
     });
 
-    /* انتقال مباشر للصفحة الرئيسية */
-    location.href = "index.html";
+    window.location.href = "index.html";
 
   }catch(err){
+    console.error(err);
     errorDiv.textContent = err.message;
   }
-};
+});
 </script>
 
 </body>
