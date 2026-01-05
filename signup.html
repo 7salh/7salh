@@ -78,7 +78,7 @@ button{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -128,11 +128,10 @@ form.addEventListener("submit", async (e) => {
     return errorDiv.textContent = "رقم الآيبان غير صحيح";
 
   try{
-    // 🔹 إنشاء الحساب (يسجل الدخول تلقائيًا)
+    // إنشاء الحساب
     const cred = await createUserWithEmailAndPassword(auth,email,password);
 
-    await updateProfile(cred.user,{ displayName: username });
-
+    // حفظ البيانات
     await setDoc(doc(db,"users",cred.user.uid),{
       displayName: username,
       email,
@@ -143,8 +142,11 @@ form.addEventListener("submit", async (e) => {
       createdAt: Date.now()
     });
 
-    // ✅ دخول تلقائي + تحويل مباشر للصفحة الرئيسية
-    location.replace("./index.html");
+    // تسجيل خروج مباشر
+    await signOut(auth);
+
+    // تحويل لصفحة تسجيل الدخول
+    location.replace("./login.html");
 
   }catch(err){
     console.error(err);
