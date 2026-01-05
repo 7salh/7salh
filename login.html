@@ -5,91 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تسجيل الدخول</title>
 <style>
-body {
-  margin: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027);
-  background-size: 400% 400%;
-  animation: gradientMove 12s ease infinite;
-  font-family: 'Tahoma', sans-serif;
-  color: #fff;
-  text-align: center;
-}
-@keyframes gradientMove { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
-h1 { font-size: 2.5rem; margin-bottom: 30px; letter-spacing: 3px; text-shadow: 0 0 15px #00e6ff, 0 0 30px #00e6ff; }
-form { display: flex; flex-direction: column; width: 300px; }
-input, button { padding: 12px; margin: 10px 0; border-radius: 20px; border: 2px solid #00e6ff; background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; text-align: right; outline: none; transition: all 0.3s ease; }
-input:focus { background: rgba(0,0,0,0.4); box-shadow: 0 0 15px #00e6ff; border-color: #00e6ff; }
-button { cursor: pointer; font-size: 1.2rem; background: #00e6ff; color: #000; }
-.error { color: #ff4d4d; font-size: 0.9rem; margin-top: -5px; margin-bottom: 10px; text-align: right; }
-p { margin-top: 15px; cursor: pointer; color: #00e6ff; }
+body{margin:0;height:100vh;display:flex;justify-content:center;align-items:center;
+background:linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#0f2027);
+background-size:400% 400%;animation:gradientMove 12s ease infinite;
+font-family:Tahoma;color:#fff}
+@keyframes gradientMove{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+form{width:300px;display:flex;flex-direction:column}
+input,button{margin:8px 0;padding:12px;border-radius:20px;border:2px solid #00e6ff;background:rgba(0,0,0,.2);color:#fff}
+button{background:#00e6ff;color:#000;font-weight:bold;cursor:pointer}
+.error{color:#ff4d4d;font-size:.9rem}
 </style>
 </head>
 <body>
 
-<h1>تسجيل الدخول</h1>
 <form id="loginForm">
-  <input type="text" id="identifier" placeholder="البريد الإلكتروني أو اسم المستخدم" required>
-  <input type="password" id="password" placeholder="كلمة المرور" required>
+  <input id="identifier" placeholder="البريد أو اسم المستخدم" required>
+  <input id="password" type="password" placeholder="كلمة المرور" required>
   <div id="error" class="error"></div>
-  <button type="submit">تسجيل الدخول</button>
+  <button>تسجيل الدخول</button>
 </form>
 
-<p onclick="window.location.href='signup.html'">ليس لديك حساب؟ إنشاء حساب</p>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
+  authDomain: "salh-2e2e7.firebaseapp.com",
+  projectId: "salh-2e2e7"
+};
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
-    authDomain: "salh-2e2e7.firebaseapp.com",
-    projectId: "salh-2e2e7",
-    storageBucket: "salh-2e2e7.firebasestorage.app",
-    messagingSenderId: "362668627160",
-    appId: "1:362668627160:web:088c3cf40ca403453273ad",
-    measurementId: "G-EEY7LXZQHL"
-  };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+const form = document.getElementById("loginForm");
+const errorDiv = document.getElementById("error");
 
-  const loginForm = document.getElementById('loginForm');
-  const errorDiv = document.getElementById('error');
+form.onsubmit = async e => {
+  e.preventDefault();
+  errorDiv.textContent = "";
 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorDiv.textContent = '';
+  let identifier = identifier.value.trim();
+  const pass = password.value;
 
-    const identifier = document.getElementById('identifier').value.trim();
-    const password = document.getElementById('password').value;
-
-    try {
-      let emailToUse = identifier;
-
-      if(!identifier.includes('@')) {
-        // إذا أدخل المستخدم اسم المستخدم بدل البريد
-        const usersRef = db.collection("users");
-        const querySnapshot = await usersRef.where("displayName", "==", identifier).get();
-
-        if(querySnapshot.empty) throw new Error("اسم المستخدم غير موجود.");
-        emailToUse = querySnapshot.docs[0].data().email;
-      }
-
-      await auth.signInWithEmailAndPassword(emailToUse, password);
-      window.location.href = "index.html";
-
-    } catch(err) {
-      console.error(err);
-      errorDiv.textContent = err.message;
+  try {
+    if(!identifier.includes("@")){
+      const q = query(collection(db,"users"), where("displayName","==",identifier));
+      const snap = await getDocs(q);
+      if(snap.empty) throw new Error("اسم المستخدم غير موجود");
+      identifier = snap.docs[0].data().email;
     }
-  });
+
+    await signInWithEmailAndPassword(auth, identifier, pass);
+    location.href="index.html";
+  } catch(err){
+    errorDiv.textContent = err.message;
+  }
+};
 </script>
 
 </body>
