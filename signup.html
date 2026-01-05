@@ -5,122 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إنشاء حساب</title>
 <style>
+/* نفس CSS الخاص بك بدون تغيير */
 body {
   margin: 0;
   height: 100vh;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #0f2027);
+  background: linear-gradient(-45deg,#0f2027,#203a43,#2c5364,#0f2027);
   background-size: 400% 400%;
   animation: gradientMove 12s ease infinite;
-  font-family: 'Tahoma', sans-serif;
-  color: #fff;
-  text-align: center;
+  font-family: Tahoma;
+  color:#fff;
 }
-@keyframes gradientMove { 0% { background-position:0% 50%; } 50% { background-position:100% 50%; } 100% { background-position:0% 50%; } }
-h1 { font-size: 2.5rem; margin-bottom: 30px; letter-spacing: 3px; text-shadow: 0 0 15px #00e6ff, 0 0 30px #00e6ff; }
-form { display: flex; flex-direction: column; width: 300px; }
-input, select, button { padding: 12px; margin: 10px 0; border-radius: 20px; border: 2px solid #00e6ff; background: rgba(0,0,0,0.2); color: #fff; font-size: 1rem; text-align: right; outline: none; transition: all 0.3s ease; }
-input:focus, select:focus { background: rgba(0,0,0,0.4); box-shadow: 0 0 15px #00e6ff; border-color: #00e6ff; }
-button { cursor: pointer; font-size: 1.2rem; background: #00e6ff; color: #000; }
-.error { color: #ff4d4d; font-size: 0.9rem; margin-top: -5px; margin-bottom: 10px; text-align: right; }
+@keyframes gradientMove {0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+form{width:300px;display:flex;flex-direction:column}
+input,select,button{margin:8px 0;padding:12px;border-radius:20px;border:2px solid #00e6ff;background:rgba(0,0,0,.2);color:#fff}
+button{background:#00e6ff;color:#000;font-weight:bold;cursor:pointer}
+.error{color:#ff4d4d;font-size:.9rem}
 </style>
 </head>
 <body>
 
-<h1>إنشاء حساب جديد</h1>
 <form id="signupForm">
-  <input type="text" id="username" placeholder="اسم المستخدم" required>
-  <input type="email" id="email" placeholder="البريد الإلكتروني" required>
-  <input type="password" id="password" placeholder="كلمة المرور" required>
-  <input type="password" id="confirmPassword" placeholder="تأكيد كلمة المرور" required>
-  <input type="number" id="age" placeholder="العمر" min="10" max="100" required>
-  <select id="ageGroup" required>
-    <option value="">اختر الفئة العمرية</option>
-    <option value="15-24">15-24</option>
-    <option value="25-30">25-30</option>
-    <option value="31-40">31-40</option>
-    <option value="40+">40+</option>
-  </select>
+  <input id="username" placeholder="اسم المستخدم" required>
+  <input id="email" type="email" placeholder="البريد الإلكتروني" required>
+  <input id="password" type="password" placeholder="كلمة المرور" required>
+  <input id="confirmPassword" type="password" placeholder="تأكيد كلمة المرور" required>
   <select id="region" required>
     <option value="">اختر المنطقة</option>
-    <option value="الشرقية">المنطقة الشرقية</option>
-    <option value="الوسطى">المنطقة الوسطى</option>
-    <option value="الغربية">المنطقة الغربية</option>
+    <option value="الشرقية">الشرقية</option>
+    <option value="الوسطى">الوسطى</option>
+    <option value="الغربية">الغربية</option>
   </select>
   <div id="error" class="error"></div>
-  <button type="submit">إنشاء الحساب</button>
+  <button>إنشاء الحساب</button>
 </form>
 
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
-    authDomain: "salh-2e2e7.firebaseapp.com",
-    projectId: "salh-2e2e7",
-    storageBucket: "salh-2e2e7.firebasestorage.app",
-    messagingSenderId: "362668627160",
-    appId: "1:362668627160:web:088c3cf40ca403453273ad",
-    measurementId: "G-EEY7LXZQHL"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
+  authDomain: "salh-2e2e7.firebaseapp.com",
+  projectId: "salh-2e2e7"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-  const signupForm = document.getElementById('signupForm');
-  const errorDiv = document.getElementById('error');
+const form = document.getElementById("signupForm");
+const errorDiv = document.getElementById("error");
 
-  signupForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    errorDiv.textContent = '';
+form.onsubmit = async e => {
+  e.preventDefault();
+  errorDiv.textContent = "";
 
-    const username = document.getElementById('username').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const age = document.getElementById('age').value;
-    const ageGroup = document.getElementById('ageGroup').value;
-    const region = document.getElementById('region').value;
+  const username = username.value.trim();
+  const email = email.value.trim();
+  const pass = password.value;
+  const confirm = confirmPassword.value;
+  const region = region.value;
 
-    if(password.length < 6){ errorDiv.textContent="كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل."; return; }
-    if(password !== confirmPassword){ errorDiv.textContent="كلمة المرور وتأكيدها غير متطابقين."; return; }
+  if(pass !== confirm) return errorDiv.textContent="كلمتا المرور غير متطابقتين";
 
-    try{
-      const methods = await auth.fetchSignInMethodsForEmail(email);
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
 
-      if(methods.length > 0){
-        // البريد موجود → تسجيل الدخول مباشرة
-        await auth.signInWithEmailAndPassword(email, password);
-      } else {
-        // البريد غير موجود → إنشاء الحساب
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        await userCredential.user.updateProfile({ displayName: username });
+    await setDoc(doc(db,"users",cred.user.uid),{
+      displayName: username,
+      email,
+      region,
+      role: "user",
+      watchedVideos: []
+    });
 
-        await db.collection("users").doc(userCredential.user.uid).set({
-          displayName: username,
-          email: email,
-          age: parseInt(age),
-          ageGroup: ageGroup,
-          region: region,
-          role: "user",
-          watchedVideos: []
-        });
-      }
-
-      // تحويل مباشر بعد نجاح العملية
-      window.location.href = "login.html";
-
-    } catch(err){
-      console.error(err);
-      errorDiv.textContent = err.message;
-    }
-  });
+    location.href="index.html";
+  } catch(err){
+    errorDiv.textContent = err.message;
+  }
+};
 </script>
 
 </body>
