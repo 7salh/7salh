@@ -118,21 +118,25 @@ form.addEventListener("submit", async (e) => {
   const ageGroup = ageGroupSelect.value;
   const iban = ibanInput.value;
 
-  if(password.length < 6)
+  // التحقق من صحة البيانات
+  if(password.length < 6) {
     return errorDiv.textContent = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
+  }
 
-  if(password !== confirm)
+  if(password !== confirm) {
     return errorDiv.textContent = "كلمتا المرور غير متطابقتين";
+  }
 
-  if(iban.length !== 19)
+  if(iban.length !== 19) {
     return errorDiv.textContent = "رقم الآيبان غير صحيح";
+  }
 
-  try{
+  try {
     // إنشاء الحساب
-    const cred = await createUserWithEmailAndPassword(auth,email,password);
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-    // حفظ البيانات
-    await setDoc(doc(db,"users",cred.user.uid),{
+    // حفظ البيانات في Firestore
+    await setDoc(doc(db, "users", cred.user.uid), {
       displayName: username,
       email,
       ageGroup,
@@ -142,15 +146,28 @@ form.addEventListener("submit", async (e) => {
       createdAt: Date.now()
     });
 
-    // تسجيل خروج مباشر
-    await signOut(auth);
+    console.log("تم إنشاء الحساب وحفظ البيانات بنجاح");
 
-    // تحويل لصفحة تسجيل الدخول
+    // محاولة تسجيل الخروج بدون منع إعادة التوجيه
+    try {
+      await signOut(auth);
+      console.log("تم تسجيل الخروج بنجاح");
+    } catch (logoutErr) {
+      console.warn("فشل تسجيل الخروج:", logoutErr.message);
+    }
+
+    // إعادة التوجيه دائمًا
+    console.log("سيتم تحويلك إلى صفحة تسجيل الدخول الآن");
     location.replace("./login.html");
 
-  }catch(err){
-    console.error(err);
-    errorDiv.textContent = err.message;
+  } catch (err) {
+    console.error("حدث خطأ أثناء إنشاء الحساب:", err);
+    // عرض رسالة مختصرة للمستخدم
+    if(err.code === "auth/email-already-in-use") {
+      errorDiv.textContent = "هذا البريد الإلكتروني مستخدم بالفعل";
+    } else {
+      errorDiv.textContent = "حدث خطأ أثناء إنشاء الحساب، حاول مرة أخرى";
+    }
   }
 });
 </script>
