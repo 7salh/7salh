@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إنشاء حساب</title>
+<title>إنشاء حساب / تسجيل الدخول</title>
 
 <style>
 body{
@@ -48,12 +48,14 @@ button{
   color:#ff4d4d;
   font-size:.9rem;
 }
+.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<form id="signupForm">
+<!-- ===== إنشاء الحساب ===== -->
+<form id="signupSection">
   <h1>إنشاء حساب جديد</h1>
 
   <input id="username" placeholder="اسم المستخدم" required>
@@ -72,14 +74,24 @@ button{
 
   <input id="iban" placeholder="SAxxxxxxxxxxxxxxxxx" required>
 
-  <div id="error" class="error"></div>
-  <button type="submit">إنشاء الحساب</button>
+  <div id="signupError" class="error"></div>
+  <button type="submit">تم</button>
+</form>
+
+<!-- ===== تسجيل الدخول ===== -->
+<form id="loginSection" class="hidden">
+  <h1>تسجيل الدخول</h1>
+
+  <input id="identifier" placeholder="البريد الإلكتروني أو اسم المستخدم" required>
+  <input id="loginPassword" type="password" placeholder="كلمة المرور" required>
+  <div id="loginError" class="error"></div>
+  <button type="submit">تسجيل الدخول</button>
 </form>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB-hbThdD4r_3V5L0ZC-Jqd5VW5VmvjrJE",
@@ -91,85 +103,65 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-const form = document.getElementById("signupForm");
-const errorDiv = document.getElementById("error");
+/* ===== إنشاء الحساب ===== */
+iban.value = "SA";
+iban.oninput = () => {
+  iban.value = "SA" + iban.value.replace(/[^0-9]/g,"").slice(0,17);
+};
 
-const usernameInput = document.getElementById("username");
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-const confirmInput = document.getElementById("confirm");
-const ageGroupSelect = document.getElementById("ageGroup");
-const ibanInput = document.getElementById("iban");
-
-/* IBAN: SA + 17 رقم فقط */
-ibanInput.value = "SA";
-ibanInput.addEventListener("input", () => {
-  ibanInput.value = "SA" + ibanInput.value.replace(/[^0-9]/g,"").slice(0,17);
-});
-
-form.addEventListener("submit", async (e) => {
+signupSection.onsubmit = async e => {
   e.preventDefault();
-  errorDiv.textContent = "";
+  signupError.textContent = "";
 
-  const username = usernameInput.value.trim();
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-  const confirm = confirmInput.value;
-  const ageGroup = ageGroupSelect.value;
-  const iban = ibanInput.value;
+  if(password.value.length < 6)
+    return signupError.textContent = "كلمة المرور قصيرة";
 
-  // التحقق من صحة البيانات
-  if(password.length < 6) {
-    return errorDiv.textContent = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
-  }
+  if(password.value !== confirm.value)
+    return signupError.textContent = "كلمتا المرور غير متطابقتين";
 
-  if(password !== confirm) {
-    return errorDiv.textContent = "كلمتا المرور غير متطابقتين";
-  }
+  try{
+    const cred = await createUserWithEmailAndPassword(auth, email.value, password.value);
 
-  if(iban.length !== 19) {
-    return errorDiv.textContent = "رقم الآيبان غير صحيح";
-  }
-
-  try {
-    // إنشاء الحساب
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-    // حفظ البيانات في Firestore
-    await setDoc(doc(db, "users", cred.user.uid), {
-      displayName: username,
-      email,
-      ageGroup,
-      iban,
-      balance: 0,
-      role: "user",
-      createdAt: Date.now()
+    await setDoc(doc(db,"users",cred.user.uid),{
+      displayName: username.value,
+      email: email.value,
+      ageGroup: ageGroup.value,
+      iban: iban.value,
+      balance:0,
+      role:"user",
+      createdAt:Date.now()
     });
 
-    console.log("تم إنشاء الحساب وحفظ البيانات بنجاح");
+    signupSection.classList.add("hidden");
+    loginSection.classList.remove("hidden");
 
-    // محاولة تسجيل الخروج بدون منع إعادة التوجيه
-    try {
-      await signOut(auth);
-      console.log("تم تسجيل الخروج بنجاح");
-    } catch (logoutErr) {
-      console.warn("فشل تسجيل الخروج:", logoutErr.message);
-    }
-
-    // إعادة التوجيه دائمًا
-    console.log("سيتم تحويلك إلى صفحة تسجيل الدخول الآن");
-    location.replace("./login.html");
-
-  } catch (err) {
-    console.error("حدث خطأ أثناء إنشاء الحساب:", err);
-    // عرض رسالة مختصرة للمستخدم
-    if(err.code === "auth/email-already-in-use") {
-      errorDiv.textContent = "هذا البريد الإلكتروني مستخدم بالفعل";
-    } else {
-      errorDiv.textContent = "حدث خطأ أثناء إنشاء الحساب، حاول مرة أخرى";
-    }
+  }catch(err){
+    signupError.textContent = "خطأ في إنشاء الحساب";
   }
-});
+};
+
+/* ===== تسجيل الدخول ===== */
+loginSection.onsubmit = async e => {
+  e.preventDefault();
+  loginError.textContent = "";
+
+  let id = identifier.value.trim();
+  const pass = loginPassword.value;
+
+  try{
+    if(!id.includes("@")){
+      const q = query(collection(db,"users"), where("displayName","==",id));
+      const snap = await getDocs(q);
+      if(snap.empty) throw new Error("اسم المستخدم غير موجود");
+      id = snap.docs[0].data().email;
+    }
+
+    await signInWithEmailAndPassword(auth,id,pass);
+    location.href="index.html";
+  }catch(err){
+    loginError.textContent = err.message;
+  }
+};
 </script>
 
 </body>
